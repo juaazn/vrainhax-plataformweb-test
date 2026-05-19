@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSessions } from "@/lib/hooks/use-sessions";
 import { ApiError } from "@/lib/api";
+import { useAuth } from "@/features/auth/use-auth";
 import { formatDate } from "@/lib/format-date";
 import type { SessionStatus, SessionListParams } from "@/types/api";
 
@@ -27,6 +29,8 @@ const ALL_STATUSES: SessionStatus[] = [
 
 export default function SessionsPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const canCreate = user?.role === "admin" || user?.role === "therapist";
 
   const [statusFilter, setStatusFilter] = useState<SessionStatus | "">("");
   const [dateFromInput, setDateFromInput] = useState("");
@@ -184,19 +188,27 @@ export default function SessionsPage() {
       </div>
 
       {sessions.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
-          <p className="text-sm text-slate-500">No sessions found.</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center space-y-3">
+          <p className="text-sm text-slate-500">No se encontraron sesiones.</p>
+          {canCreate && (
+            <Link
+              href="/sessions/new"
+              className="inline-block rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+            >
+              + Nueva sesión
+            </Link>
+          )}
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Session ID</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Patient ID</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Started</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Ended</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Sesión</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Paciente</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Estado</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Inicio</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Fin</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -209,8 +221,14 @@ export default function SessionsPage() {
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">
                     {session.session_id.slice(0, 8)}...
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                    {session.patient_id.slice(0, 8)}...
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/patients/${session.patient_id}`}
+                      className="font-mono text-xs text-blue-600 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {session.patient_id.slice(0, 8)}...
+                    </Link>
                   </td>
                   <td className="px-4 py-3">
                     <span

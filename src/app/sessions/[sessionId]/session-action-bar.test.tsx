@@ -237,12 +237,147 @@ describe('SessionActionBar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }));
 
     await waitFor(() => {
-      expect(sessionsApi.cancel).toHaveBeenCalledWith('sess-action-bar-test', undefined);
+      expect(sessionsApi.cancel).toHaveBeenCalledWith('sess-action-bar-test');
     });
 
     // After cancellation, the action bar should disappear (status is now cancelled)
     await waitFor(() => {
       expect(screen.queryByText('Session Actions')).not.toBeInTheDocument();
+    });
+  });
+
+  // --- Readiness guardrail error messages (Feature #35) ---
+
+  it('muestra mensaje PATIENT_INACTIVE al iniciar sesion con paciente dado de baja', async () => {
+    const { ApiError } = await import('@/lib/api');
+    vi.mocked(sessionsApi.start).mockRejectedValue(
+      new ApiError(409, 'PATIENT_INACTIVE', 'Patient not active'),
+    );
+    vi.mocked(useSession).mockReturnValue(makeSessionMock(pendingSession));
+    vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
+
+    render(<SessionDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/paciente asignado está dado de baja/i);
+    });
+  });
+
+  it('muestra mensaje INVALID_CONFIG al iniciar sesion sin configuracion', async () => {
+    const { ApiError } = await import('@/lib/api');
+    vi.mocked(sessionsApi.start).mockRejectedValue(
+      new ApiError(400, 'INVALID_CONFIG', 'Session has no configuration'),
+    );
+    vi.mocked(useSession).mockReturnValue(makeSessionMock(pendingSession));
+    vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
+
+    render(<SessionDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/configuración inválida/i);
+    });
+  });
+
+  it('muestra mensaje DEVICE_ALREADY_IN_USE al iniciar sesion con dispositivo ocupado', async () => {
+    const { ApiError } = await import('@/lib/api');
+    vi.mocked(sessionsApi.start).mockRejectedValue(
+      new ApiError(409, 'DEVICE_ALREADY_IN_USE', 'Device already in use'),
+    );
+    vi.mocked(useSession).mockReturnValue(makeSessionMock(pendingSession));
+    vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
+
+    render(<SessionDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/dispositivo ya está en uso/i);
+    });
+  });
+
+  it('"Finalizar sesión" shows confirmation UI when clicked', async () => {
+    vi.mocked(useSession).mockReturnValue(makeSessionMock(runningSession));
+    vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
+
+    render(<SessionDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Finalizar sesión' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finalizar sesión' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('¿Confirmar finalización?')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sí, finalizar' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'No' })).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('button', { name: 'Finalizar sesión' })).not.toBeInTheDocument();
+  });
+
+  it('"No" in finalizar confirmation restores the original button', async () => {
+    vi.mocked(useSession).mockReturnValue(makeSessionMock(runningSession));
+    vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
+
+    render(<SessionDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Finalizar sesión' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finalizar sesión' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'No' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'No' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Finalizar sesión' })).toBeInTheDocument();
+    });
+    expect(screen.queryByText('¿Confirmar finalización?')).not.toBeInTheDocument();
+  });
+
+  it('"Sí, finalizar" calls sessionsApi.complete', async () => {
+    const completedResult: SessionDetailDTO = { ...runningSession, status: 'completed', ended_at: '2026-05-19T11:00:00Z' };
+    vi.mocked(sessionsApi.complete).mockResolvedValue({ session: completedResult });
+    vi.mocked(useSession).mockReturnValue(makeSessionMock(runningSession));
+    vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
+
+    render(<SessionDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Finalizar sesión' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finalizar sesión' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Sí, finalizar' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sí, finalizar' }));
+
+    await waitFor(() => {
+      expect(sessionsApi.complete).toHaveBeenCalledWith('sess-action-bar-test');
     });
   });
 });

@@ -4,6 +4,8 @@ import type {
   PatientCreatePayload,
   PatientPatchPayload,
   PatientListParams,
+  PatientProgressDTO,
+  PatientProgressListParams,
 } from '@/types/api';
 
 export const patientsApi = {
@@ -24,5 +26,11 @@ export const patientsApi = {
   },
   reactivate(patientId: string): Promise<PatientDTO> {
     return patientsApi.patch(patientId, { active: true });
+  },
+  getProgress(patientId: string, params?: PatientProgressListParams): Promise<PatientProgressDTO> {
+    return apiClient.get<PatientProgressDTO>(
+      `/api/v1/patients/${patientId}/progress`,
+      params as Record<string, unknown> | undefined,
+    );
   },
 };

@@ -13,6 +13,16 @@ export type {
   PatientCreatePayload,
   PatientPatchPayload,
   PatientListParams,
+  SessionProgressItemDTO,
+  PatientProgressDTO,
+  PatientProgressListParams,
+  PatientProgressTotals,
+  PatientProgressSeries,
+  PatientProgressFilters,
+  PatientProgressSummary,
+  ScorePoint,
+  ElapsedPoint,
+  PainPoint,
 } from './patient.types';
 
 export type {

@@ -839,6 +839,7 @@ function SessionActionBar({ session, onSessionUpdated }: SessionActionBarProps) 
   const [isCancelling, setIsCancelling] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmComplete, setConfirmComplete] = useState(false);
 
   const isPending = session.status === "pending";
   const isRunning = session.status === "running";
@@ -852,7 +853,21 @@ function SessionActionBar({ session, onSessionUpdated }: SessionActionBarProps) 
       const result = await sessionsApi.start(session.session_id);
       onSessionUpdated(result.session as SessionDetailDTO);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to start session");
+      if (err instanceof ApiError) {
+        const messages: Record<string, string> = {
+          PATIENT_INACTIVE: "El paciente asignado está dado de baja. Actívalo antes de iniciar la sesión.",
+          VARIANT_INACTIVE: "La variante asignada está inactiva. Contacta al administrador.",
+          MODULE_INACTIVE: "El módulo de la variante está inactivo. Contacta al administrador.",
+          INVALID_CONFIG: `Configuración inválida: ${err.message}`,
+          DEVICE_INACTIVE: "El dispositivo asignado está inactivo o fue dado de baja.",
+          DEVICE_ALREADY_IN_USE: "El dispositivo ya está en uso en otra sesión activa.",
+          REDIS_UNAVAILABLE: "El servidor de tiempo real no está disponible. Inténtalo de nuevo.",
+          INVALID_SESSION_TRANSITION: "Esta sesión no se puede iniciar en su estado actual.",
+        };
+        setActionError(messages[err.code] ?? err.message);
+      } else {
+        setActionError("Error al iniciar la sesión. Verifica la conexión.");
+      }
     } finally {
       setIsStarting(false);
     }
@@ -864,6 +879,7 @@ function SessionActionBar({ session, onSessionUpdated }: SessionActionBarProps) 
     try {
       const result = await sessionsApi.complete(session.session_id);
       onSessionUpdated(result.session as SessionDetailDTO);
+      setConfirmComplete(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to complete session");
     } finally {
@@ -906,18 +922,35 @@ function SessionActionBar({ session, onSessionUpdated }: SessionActionBarProps) 
         )}
 
         {isRunning && (
-          <button
-            type="button"
-            onClick={() => { void handleComplete(); }}
-            disabled={isCompleting}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              isCompleting
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700"
-            }`}
-          >
-            {isCompleting ? "Finalizando..." : "Finalizar sesión"}
-          </button>
+          !confirmComplete ? (
+            <button
+              type="button"
+              onClick={() => setConfirmComplete(true)}
+              disabled={isCompleting}
+              className="rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Finalizar sesión
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-600">¿Confirmar finalización?</span>
+              <button
+                type="button"
+                onClick={() => { void handleComplete(); }}
+                disabled={isCompleting}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+              >
+                {isCompleting ? "Finalizando..." : "Sí, finalizar"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmComplete(false)}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200"
+              >
+                No
+              </button>
+            </div>
+          )
         )}
 
         {!confirmCancel ? (
@@ -1230,6 +1263,14 @@ export default function SessionDetailPage() {
         >
           {session.status}
         </span>
+        {session.patient_id && (
+          <Link
+            href={`/patients/${session.patient_id}`}
+            className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            Ver paciente
+          </Link>
+        )}
         {canSeeReport && (
           <Link
             href={`/sessions/${session.session_id}/report`}

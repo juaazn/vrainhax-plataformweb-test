@@ -6,6 +6,7 @@ import NewSessionPage from './page';
 const mockRouterPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockRouterPush }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // --- Auth mock ---
