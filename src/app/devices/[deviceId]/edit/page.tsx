@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { devicesApi } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import type { DeviceUpdatePayload } from "@/types/api";
@@ -25,13 +25,9 @@ type PageStatus =
 
 type ValidationErrors = Partial<Record<keyof FormState, string>>;
 
-interface EditDevicePageProps {
-  params: { deviceId: string };
-}
-
-export default function EditDevicePage({ params }: EditDevicePageProps) {
+export default function EditDevicePage() {
   const router = useRouter();
-  const { deviceId } = params;
+  const { deviceId } = useParams<{ deviceId: string }>();
 
   const [status, setStatus] = useState<PageStatus>("loading");
   const [form, setForm] = useState<FormState>({
@@ -105,8 +101,8 @@ export default function EditDevicePage({ params }: EditDevicePageProps) {
     setErrorMessage("");
 
     const payload: DeviceUpdatePayload = {
-      device_name: form.device_name.trim(),
-      device_type: form.device_type.trim(),
+      name: form.device_name.trim(),
+      type: form.device_type.trim(),
       serial_number: form.serial_number.trim(),
     };
     if (form.firmware_version.trim()) payload.firmware_version = form.firmware_version.trim();

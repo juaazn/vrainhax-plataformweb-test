@@ -6,6 +6,7 @@ import PatientProgressPage from "./page";
 const mockRouterPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockRouterPush }),
+  useParams: () => ({ patientId: "pat-001" }),
 }));
 
 // --- Hook mocks ---
@@ -88,7 +89,7 @@ const MOCK_PROGRESS = {
     elapsed_seconds_over_time: [],
     pain_before_after: [],
   },
-  warnings: [],
+  warnings: [] as string[],
 };
 
 // ---------------------------------------------------------------------------
@@ -125,8 +126,6 @@ function mockError(error: Error, role = "therapist") {
   });
 }
 
-const PARAMS = { patientId: "pat-001" };
-
 beforeEach(() => {
   vi.clearAllMocks();
   mockRouterPush.mockReset();
@@ -139,66 +138,66 @@ beforeEach(() => {
 describe("PatientProgressPage", () => {
   it("muestra estado de carga", () => {
     mockLoading();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText(/cargando historial/i)).toBeInTheDocument();
   });
 
   it("muestra nombre del paciente cuando los datos cargan", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText("Ana Garcia")).toBeInTheDocument();
   });
 
   it("muestra el título Historial de progreso", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByRole("heading", { name: /historial de progreso/i })).toBeInTheDocument();
   });
 
   it("el enlace 'Volver al paciente' apunta a /patients/:patientId", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     const link = screen.getByRole("link", { name: /volver al paciente/i });
     expect(link).toHaveAttribute("href", "/patients/pat-001");
   });
 
   it("muestra el total de sesiones en resumen", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText("5")).toBeInTheDocument();
   });
 
   it("muestra el número de sesiones completadas y con métricas", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     // completed_sessions: 4 y sessions_with_metrics: 4 aparecen ambas en el resumen
     expect(screen.getAllByText("4").length).toBeGreaterThanOrEqual(2);
   });
 
   it("muestra el último score", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     const scores = screen.getAllByText("85");
     expect(scores.length).toBeGreaterThan(0);
   });
 
   it("renderiza la tabla de sesiones con módulo y variante", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText("Funcional")).toBeInTheDocument();
     expect(screen.getByText("Standard")).toBeInTheDocument();
   });
 
   it("la sesión en tabla enlaza a /sessions/:id", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     const link = screen.getByRole("link", { name: /aabbccdd/i });
     expect(link).toHaveAttribute("href", `/sessions/${MOCK_SESSION.session_id}`);
   });
 
   it("muestra empty state cuando no hay sesiones", () => {
     mockLoaded({ sessions: [] });
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(
       screen.getByText(/no hay sesiones registradas/i),
     ).toBeInTheDocument();
@@ -206,13 +205,13 @@ describe("PatientProgressPage", () => {
 
   it("muestra warnings cuando el DTO los incluye", () => {
     mockLoaded({ warnings: ["Sin métricas registradas"] });
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByRole("alert")).toHaveTextContent(/sin métricas/i);
   });
 
   it("muestra acceso denegado para rol patient", () => {
     mockLoaded({}, "patient");
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText(/acceso denegado/i)).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /volver al paciente/i }),
@@ -221,7 +220,7 @@ describe("PatientProgressPage", () => {
 
   it("muestra error 403", () => {
     mockError(new ApiError(403, "FORBIDDEN", "Forbidden"));
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText(/acceso denegado/i)).toBeInTheDocument();
     const btn = screen.getByRole("button", { name: /volver a pacientes/i });
     fireEvent.click(btn);
@@ -230,14 +229,14 @@ describe("PatientProgressPage", () => {
 
   it("muestra error 404 con patientId", () => {
     mockError(new ApiError(404, "NOT_FOUND", "Not found"));
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText(/paciente no encontrado/i)).toBeInTheDocument();
     expect(screen.getByText(/pat-001/)).toBeInTheDocument();
   });
 
   it("muestra error 401 con link al login", () => {
     mockError(new ApiError(401, "UNAUTHORIZED", "Unauthorized"));
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText(/sesión expirada/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /ir al login/i })).toBeInTheDocument();
   });
@@ -252,7 +251,7 @@ describe("PatientProgressPage", () => {
       reload,
     });
 
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(screen.getByText("Network error")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /reintentar/i }));
@@ -261,7 +260,7 @@ describe("PatientProgressPage", () => {
 
   it("usePatientProgress se llama con limit 50", () => {
     mockLoaded();
-    render(<PatientProgressPage params={PARAMS} />);
+    render(<PatientProgressPage />);
     expect(vi.mocked(usePatientProgress)).toHaveBeenCalledWith("pat-001", { limit: 50 });
   });
 });

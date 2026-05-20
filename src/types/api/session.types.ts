@@ -88,6 +88,7 @@ export interface AssignDevicePayload {
 export interface SessionDetailDTO extends SessionDTO {
   patient: { first_name: string; last_name: string } | null;
   device: { name: string; serial_number: string } | null;
+  variant?: { name: string; variant_code: string } | null;
 }
 
 export interface SessionEventDTO {

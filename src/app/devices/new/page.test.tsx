@@ -110,8 +110,8 @@ describe('NewDevicePage', () => {
     await waitFor(() => {
       expect(devicesApi.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          device_name: 'New Headset',
-          device_type: 'headset',
+          name: 'New Headset',
+          type: 'headset',
           serial_number: 'SN-NEW-001',
         }),
       );

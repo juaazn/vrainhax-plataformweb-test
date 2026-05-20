@@ -66,8 +66,6 @@ import { useAuth } from '@/features/auth/use-auth';
 import { sessionsApi } from '@/lib/api/sessions-api';
 import { ApiError } from '@/lib/api';
 
-const mockParams = { sessionId: 'sess-1' };
-
 function makeAuthMock(role: 'admin' | 'therapist' | 'patient') {
   return {
     user: { role, userId: 'u-1', email: 'test@test.com' },
@@ -116,7 +114,7 @@ describe('SessionReportPage', () => {
   it('admin renders "Session Report" with patient name', async () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/VRAINHAX — Session Report/i)).toBeInTheDocument();
@@ -127,7 +125,7 @@ describe('SessionReportPage', () => {
   it('patient sees "Access denied" and report is not fetched', async () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('patient'));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Access denied')).toBeInTheDocument();
@@ -139,7 +137,7 @@ describe('SessionReportPage', () => {
   it('therapist sees highlights', async () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('therapist'));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('2 metric events received')).toBeInTheDocument();
@@ -150,7 +148,7 @@ describe('SessionReportPage', () => {
   it('admin sees warnings', async () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('1 command(s) failed')).toBeInTheDocument();
@@ -160,7 +158,7 @@ describe('SessionReportPage', () => {
   it('admin sees sections when data is present', async () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Failed Commands')).toBeInTheDocument();
@@ -171,7 +169,7 @@ describe('SessionReportPage', () => {
   it('Print / Save as PDF button is present for admin', async () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /Print \/ Save as PDF/i })).toBeInTheDocument();
@@ -183,7 +181,7 @@ describe('SessionReportPage', () => {
     // Make getReport never resolve during this test
     vi.mocked(sessionsApi.getReport).mockReturnValue(new Promise(() => {}));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     expect(screen.getByText('Loading report...')).toBeInTheDocument();
   });
@@ -194,7 +192,7 @@ describe('SessionReportPage', () => {
       new ApiError(404, 'SESSION_NOT_FOUND', 'Session not found'),
     );
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Session not found')).toBeInTheDocument();
@@ -207,7 +205,7 @@ describe('SessionReportPage', () => {
       new ApiError(401, 'UNAUTHORIZED', 'Unauthorized'),
     );
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Please log in')).toBeInTheDocument();
@@ -220,7 +218,7 @@ describe('SessionReportPage', () => {
       new ApiError(403, 'FORBIDDEN', 'Forbidden'),
     );
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Access denied')).toBeInTheDocument();
@@ -231,7 +229,7 @@ describe('SessionReportPage', () => {
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
     vi.mocked(sessionsApi.getReport).mockRejectedValue(new Error('Network error'));
 
-    render(<SessionReportPage params={mockParams} />);
+    render(<SessionReportPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Failed to load report')).toBeInTheDocument();

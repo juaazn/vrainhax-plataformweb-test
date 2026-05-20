@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/features/auth/use-auth';
 import { sessionsApi } from '@/lib/api/sessions-api';
 import { ApiError } from '@/lib/api';
@@ -23,19 +24,14 @@ function formatDateStr(iso?: string): string {
   }
 }
 
-interface ReportPageProps {
-  params: { sessionId: string };
-}
-
-export default function SessionReportPage({ params }: ReportPageProps) {
+export default function SessionReportPage() {
+  const { sessionId } = useParams<{ sessionId: string }>();
   const { user } = useAuth();
   const isPatient = user?.role === 'patient';
   const [report, setReport] = useState<SessionReportDTO | null>(null);
   const [loading, setLoading] = useState(!isPatient);
   const [error, setError] = useState<string | null>(null);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
-
-  const sessionId = params.sessionId;
 
   useEffect(() => {
     if (isPatient) {

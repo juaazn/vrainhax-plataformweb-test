@@ -850,8 +850,12 @@ function SessionActionBar({ session, onSessionUpdated }: SessionActionBarProps) 
     setIsStarting(true);
     setActionError(null);
     try {
-      const result = await sessionsApi.start(session.session_id);
-      onSessionUpdated(result.session as SessionDetailDTO);
+      await sessionsApi.start(session.session_id);
+      // Re-fetch full session: start response returns SessionDTO without expanded
+      // patient/variant fields, causing "Unknown" in the header. getById returns
+      // the complete SessionDetailDTO with all expanded relations.
+      const updated = await sessionsApi.getById(session.session_id);
+      onSessionUpdated(updated);
     } catch (err) {
       if (err instanceof ApiError) {
         const messages: Record<string, string> = {
@@ -877,8 +881,10 @@ function SessionActionBar({ session, onSessionUpdated }: SessionActionBarProps) 
     setIsCompleting(true);
     setActionError(null);
     try {
-      const result = await sessionsApi.complete(session.session_id);
-      onSessionUpdated(result.session as SessionDetailDTO);
+      await sessionsApi.complete(session.session_id);
+      // Re-fetch full session with expanded patient/variant fields.
+      const updated = await sessionsApi.getById(session.session_id);
+      onSessionUpdated(updated);
       setConfirmComplete(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to complete session");
@@ -891,8 +897,10 @@ function SessionActionBar({ session, onSessionUpdated }: SessionActionBarProps) 
     setIsCancelling(true);
     setActionError(null);
     try {
-      const result = await sessionsApi.cancel(session.session_id);
-      onSessionUpdated(result.session as SessionDetailDTO);
+      await sessionsApi.cancel(session.session_id);
+      // Re-fetch full session with expanded patient/variant fields.
+      const updated = await sessionsApi.getById(session.session_id);
+      onSessionUpdated(updated);
       setConfirmCancel(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to cancel session");
@@ -1298,7 +1306,9 @@ export default function SessionDetailPage() {
         <InfoRow
           label="Module (variant)"
           value={
-            <span className="font-mono text-xs">{session.variant_id}</span>
+            session.variant
+              ? `${session.variant.name} (${session.variant.variant_code})`
+              : <span className="font-mono text-xs">{session.variant_id}</span>
           }
         />
         <InfoRow

@@ -22,14 +22,14 @@ export type RotateSecretResponse = {
 export type DeviceCreateResponse = DeviceDTO & { device_secret: string };
 
 export interface DeviceCreatePayload {
-  device_name: string;
-  device_type: string;
+  name: string;
+  type: string;
   serial_number: string;
   firmware_version?: string;
   notes?: string;
 }
 
-export type DeviceUpdatePayload = Partial<Pick<DeviceCreatePayload, 'device_name' | 'device_type' | 'serial_number' | 'firmware_version' | 'notes'>>;
+export type DeviceUpdatePayload = Partial<Pick<DeviceCreatePayload, 'name' | 'type' | 'serial_number' | 'firmware_version' | 'notes'>>;
 
 /** @deprecated Use DeviceUpdatePayload */
 export type DevicePatchPayload = DeviceUpdatePayload;

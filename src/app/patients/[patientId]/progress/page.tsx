@@ -1,16 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/features/auth/use-auth";
 import { usePatientProgress } from "@/lib/hooks/use-patient-progress";
 import { ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format-date";
 import type { SessionProgressItemDTO } from "@/types/api";
-
-interface Props {
-  params: { patientId: string };
-}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -103,8 +99,8 @@ function SessionRow({ session }: { session: SessionProgressItemDTO }) {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function PatientProgressPage({ params }: Props) {
-  const { patientId } = params;
+export default function PatientProgressPage() {
+  const { patientId } = useParams<{ patientId: string }>();
   const router = useRouter();
   const { user } = useAuth();
   const isPatient = user?.role === "patient";

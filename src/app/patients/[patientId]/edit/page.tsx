@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { patientsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import type { PatientPatchPayload } from "@/types/api";
@@ -24,13 +24,9 @@ type PageStatus =
   | "error_404"
   | "error";
 
-interface EditPatientPageProps {
-  params: { patientId: string };
-}
-
-export default function EditPatientPage({ params }: EditPatientPageProps) {
+export default function EditPatientPage() {
   const router = useRouter();
-  const { patientId } = params;
+  const { patientId } = useParams<{ patientId: string }>();
 
   // Start in loading — data is always fetched on mount
   const [status, setStatus] = useState<PageStatus>("loading");

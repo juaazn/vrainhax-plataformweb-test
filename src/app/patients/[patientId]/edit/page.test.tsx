@@ -7,9 +7,8 @@ import type { PatientDTO } from "@/types/api";
 // --- Mocks ---
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: mockRouterPush,
-  }),
+  useRouter: () => ({ push: mockRouterPush }),
+  useParams: () => ({ patientId: "p-abc" }),
 }));
 
 const mockRouterPush = vi.fn();
@@ -52,8 +51,8 @@ const mockPatient: PatientDTO = {
 
 // --- Helpers ---
 
-function renderPage(patientId = "p-abc") {
-  return render(<EditPatientPage params={{ patientId }} />);
+function renderPage() {
+  return render(<EditPatientPage />);
 }
 
 beforeEach(() => {

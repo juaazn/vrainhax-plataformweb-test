@@ -123,8 +123,8 @@ export default function NewDevicePage() {
     setErrorMessage("");
 
     const payload: DeviceCreatePayload = {
-      device_name: form.device_name.trim(),
-      device_type: form.device_type.trim(),
+      name: form.device_name.trim(),
+      type: form.device_type.trim(),
       serial_number: form.serial_number.trim(),
     };
     if (form.firmware_version.trim()) payload.firmware_version = form.firmware_version.trim();

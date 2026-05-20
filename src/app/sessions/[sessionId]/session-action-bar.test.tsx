@@ -57,6 +57,7 @@ vi.mock('@/lib/api/sessions-api', () => ({
     start: vi.fn(),
     complete: vi.fn(),
     cancel: vi.fn(),
+    getById: vi.fn(),
   },
 }));
 
@@ -217,6 +218,7 @@ describe('SessionActionBar', () => {
   it('"Sí, cancelar" calls sessionsApi.cancel and calls onSessionUpdated', async () => {
     const cancelledSession: SessionDetailDTO = { ...pendingSession, status: 'cancelled' };
     vi.mocked(sessionsApi.cancel).mockResolvedValue({ session: cancelledSession });
+    vi.mocked(sessionsApi.getById).mockResolvedValue(cancelledSession);
     vi.mocked(useSession).mockReturnValue(makeSessionMock(pendingSession));
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
 
@@ -358,7 +360,8 @@ describe('SessionActionBar', () => {
 
   it('"Sí, finalizar" calls sessionsApi.complete', async () => {
     const completedResult: SessionDetailDTO = { ...runningSession, status: 'completed', ended_at: '2026-05-19T11:00:00Z' };
-    vi.mocked(sessionsApi.complete).mockResolvedValue({ session: completedResult });
+    vi.mocked(sessionsApi.complete).mockResolvedValue({ session: completedResult, realtime: { enabled: false, wsPath: '', devicesPath: '', clientsPath: '' } });
+    vi.mocked(sessionsApi.getById).mockResolvedValue(completedResult);
     vi.mocked(useSession).mockReturnValue(makeSessionMock(runningSession));
     vi.mocked(useAuth).mockReturnValue(makeAuthMock('admin'));
 

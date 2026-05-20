@@ -2,16 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { usePatient } from "@/lib/hooks/use-patient";
 import { usePatientProgress } from "@/lib/hooks/use-patient-progress";
 import { useAuth } from "@/features/auth/use-auth";
 import { patientsApi, ApiError } from "@/lib/api";
 import type { SessionProgressItemDTO } from "@/types/api";
-
-interface PatientDetailPageProps {
-  params: { patientId: string };
-}
 
 function calcAge(birthDate: string | null): string | null {
   if (!birthDate) return null;
@@ -94,9 +90,9 @@ function RecentSessionRow({ session }: { session: SessionProgressItemDTO }) {
   );
 }
 
-export default function PatientDetailPage({ params }: PatientDetailPageProps) {
+export default function PatientDetailPage() {
   const router = useRouter();
-  const { patientId } = params;
+  const { patientId } = useParams<{ patientId: string }>();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const isPatient = user?.role === "patient";

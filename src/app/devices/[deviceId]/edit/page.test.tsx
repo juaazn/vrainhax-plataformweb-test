@@ -7,6 +7,7 @@ import type { DeviceDTO } from '@/types/api';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockRouterPush }),
+  useParams: () => ({ deviceId: 'dev-abc' }),
 }));
 
 const mockRouterPush = vi.fn();
@@ -51,8 +52,8 @@ const mockDevice: DeviceDTO = {
 
 // --- Helpers ---
 
-function renderPage(deviceId = 'dev-abc') {
-  return render(<EditDevicePage params={{ deviceId }} />);
+function renderPage() {
+  return render(<EditDevicePage />);
 }
 
 beforeEach(() => {
@@ -106,8 +107,8 @@ describe('EditDevicePage', () => {
       expect(devicesApi.update).toHaveBeenCalledWith(
         'dev-abc',
         expect.objectContaining({
-          device_name: 'VR Headset Alpha',
-          device_type: 'headset',
+          name: 'VR Headset Alpha',
+          type: 'headset',
           serial_number: 'SN-ALPHA-001',
         }),
       );
@@ -176,6 +177,83 @@ describe('EditDevicePage', () => {
     );
 
     // Form remains visible
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('submitting with an edited name sends the name field (not device_name)', async () => {
+    vi.mocked(devicesApi.getById).mockResolvedValue(mockDevice);
+    vi.mocked(devicesApi.update).mockResolvedValue({ ...mockDevice, device_name: 'Renamed Headset' });
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\. VR Headset Alpha/i), {
+      target: { value: 'Renamed Headset' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(devicesApi.update).toHaveBeenCalledWith(
+        'dev-abc',
+        expect.objectContaining({ name: 'Renamed Headset' }),
+      );
+    });
+
+    const callArg = vi.mocked(devicesApi.update).mock.calls[0][1];
+    expect(callArg).not.toHaveProperty('device_name');
+  });
+
+  it('submitting with an edited type sends the type field (not device_type)', async () => {
+    vi.mocked(devicesApi.getById).mockResolvedValue(mockDevice);
+    vi.mocked(devicesApi.update).mockResolvedValue({ ...mockDevice, device_type: 'controller' });
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\. headset/i), {
+      target: { value: 'controller' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(devicesApi.update).toHaveBeenCalledWith(
+        'dev-abc',
+        expect.objectContaining({ type: 'controller' }),
+      );
+    });
+
+    const callArg = vi.mocked(devicesApi.update).mock.calls[0][1];
+    expect(callArg).not.toHaveProperty('device_type');
+  });
+
+  it('shows error banner on 400 submit failure', async () => {
+    vi.mocked(devicesApi.getById).mockResolvedValue(mockDevice);
+    vi.mocked(devicesApi.update).mockRejectedValue(
+      new ApiError(400, 'VALIDATION_ERROR', 'serial_number already registered'),
+    );
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/serial_number already registered/i)).toBeInTheDocument(),
+    );
+
+    // Form remains visible after error
     expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
     expect(mockRouterPush).not.toHaveBeenCalled();
   });
